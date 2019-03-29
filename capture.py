@@ -5,11 +5,12 @@ import RPi.GPIO as GPIO
 import time
 import argparse
 import os
-import captureKeys
+from captureKeys import APIKey, APISecretKey, AccessKey, AccessSecretKey
 import json
 from tweepy import OAuthHandler
 from tweepy import Stream
 from tweepy.streaming import StreamListener
+import pika, sys, tweepy
 
 class listener(StreamListener):
 
@@ -17,12 +18,23 @@ class listener(StreamListener):
 		tweet = all_data["text"]
 		tweet = tweet.split(" ")
 		
-		
-		
 
+def sendMessageToQueue(ip):
+	print("ip",ip)
+	connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+	channel = connection.channel()
 
+	channel.queue_declare(queue='hello')
+
+	channel.basic_publish(exchange='',
+						  routing_key='hello',
+						  body='Hello World!')
+	print(" [x] Sent 'Hello World!'")
+	connection.close()
+		
 def main(args):
 
+	"""
 	# setup pins
 	GPIO.setmode(GPIO.BOARD)
 	GPIO.setup(11, GPIO.OUT) # Red
@@ -34,9 +46,13 @@ def main(args):
 	GPIO.output(13, GPIO.HIGH)
 	GPIO.output(15, GPIO.HIGH)
 	time.sleep(3)
+	"""
 	
 	ip = args.server_ip
 	tag = args.hashtag
+	
+	
+	sendMessageToQueue(ip)
 	
 	# setup access to Twitter API
 	auth = OAuthHandler(APIKey, APISecretKey)
@@ -45,10 +61,11 @@ def main(args):
 	api = tweepy.API(auth)	
 	
 	twitterStream = Stream(auth, listener())
-	twitterStream.filter(track=[args[3]])
+	twitterStream.filter(track=[tag])
 	
 	# GET https://api.twitter.com/1.1/search/user_timeline.json?q=tag
 
+	"""
 	# red LED - Received pulish request
 	GPIO.output(13, GPIO.LOW)
 	GPIO.output(15, GPIO.LOW)
@@ -58,6 +75,8 @@ def main(args):
 	GPIO.output(11, GPIO.LOW)
 	GPIO.output(13, GPIO.HIGH)
 	time.sleep(3)
+	"""
+	
 
 
 if __name__ == "__main__":
