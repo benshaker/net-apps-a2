@@ -45,7 +45,7 @@ def main(args):
 	api = tweepy.API(auth)	
 	
 	twitterStream = Stream(auth, listener())
-	twitterStream.filter(track=[args[3])
+	twitterStream.filter(track=[args[3]])
 	
 	# GET https://api.twitter.com/1.1/search/user_timeline.json?q=tag
 
