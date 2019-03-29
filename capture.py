@@ -4,15 +4,23 @@
 import RPi.GPIO as GPIO
 import time
 import os
+import captureKeys
+import json
+import tweepy
 
 def main(args):
 
 	ip = args.server_ip
 	tag = args.hashtag
 	
-	# Read API/Dev keys from separate file
-	
+	# setup access to Twitter API
+	auth = tweepy.OAuthHandler(APIKey, APISecretKey)
+	auth.set_access_token(AccessKey, AccessSecretKey)
 
+	api = tweepy.API(auth)	
+	
+	# GET https://api.twitter.com/1.1/search/user_timeline.json?q=tag
+	
 	# setup pins
 	GPIO.setmode(GPIO.BOARD)
 	GPIO.setup(11, GPIO.OUT) # Red
