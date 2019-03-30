@@ -10,6 +10,7 @@ from pprint import pprint
 import time, argparse, os, json
 import pika, sys, tweepy
 import pymongo
+from bson import json_util
 
 '''# setup pins
 GPIO.setmode(GPIO.BOARD)
@@ -63,7 +64,7 @@ class listener(StreamListener):
         tweet = data["text"] # I am assuming this is a string...
 
         # Checkpoint 01 - Display the Command w/ current timestamp
-        print("[Checkpoint 01 ", datetime.utcfromtimestamp(time.time()),
+        print("[Checkpoint 01", datetime.utcfromtimestamp(time.time()),
               "] Tweet captured: ", tweet)
 
         # We are inferring that the tweet format is
@@ -102,14 +103,15 @@ class listener(StreamListener):
         })
 
         # Checkpoint 02 - Save to MongoDB via NoSQL
-        print("[Checkpoint 02 ", datetime.utcfromtimestamp(time.time()),
+        print("[Checkpoint 02", datetime.utcfromtimestamp(time.time()),
               "] Stored command in MongoDB instance: ")
         document = collection.find_one({"MsgID": team_num + "$" + storage_time})
         pprint(document)
 
         # Checkpoint 03 - Change LED
-        print("[Checkpoint 03 ", datetime.utcfromtimestamp(time.time()),
+        print("[Checkpoint 03", datetime.utcfromtimestamp(time.time()),
               "] GPIO LED: ") # TO DO: i don't know what else goes here
+
         '''if action == "p":
                 setLEDR()
         else if action == "c":
@@ -118,30 +120,63 @@ class listener(StreamListener):
         # Set LED back to white to show we are waiting for another command
         setLEDW()'''
 
+        # now send this message to our message queue
+        sendMessageToQueue(self.ip, document)
 
-def sendMessageToQueue(ip):
+
+def sendMessageToQueue(ip, document):
+
+    json_doc = json.dumps(document,default=json_util.default)
+    json_doc = json.loads(json_doc)
+
+    action = json_doc["Action"]
+    place = json_doc["Place"]
+    subject = json_doc["Subject"]
+    message = json_doc["Message"]
+
     credentials = pika.PlainCredentials('pi', 'raspberry')
     connection = pika.BlockingConnection(
-                    pika.ConnectionParameters('192.168.1.141',
+                    pika.ConnectionParameters(ip,
                                                5672, # default port
                                                '/', # default virtual host
                                                credentials))
     channel = connection.channel()
 
-    # channel.queue_declare(queue='')
+    # this sets up the exchange only if it doesn't already exist
+    channel.exchange_declare(exchange=place,
+                             exchange_type='direct',
+                             durable=True)
 
-    channel.basic_publish(exchange='Library',
-                          routing_key='Noise',
-                          body='Why the FUCK is it so load in here??')
-    print(" [x] Sent 'NOISE BIT!'")
+    if action == "p":
+        # publish this particular message to the provided exchange
+        channel.basic_publish(exchange=place,
+                              routing_key=subject,
+                              body=message)
+        # Checkpoint 04 - RabbitMQ producer success
+        print("[Checkpoint 04", datetime.utcfromtimestamp(time.time()),
+              "] Print out RabbitMQ command sent to the Repository RPi:",
+              "\nProducer Message:",
+              "\nPlace: ", place,
+              "\nSubject: ", subject,
+              "\nMessage: ", message)
+
+    elif action == "c":
+        print("CONSUME")
+    else:
+        print("WTF")
     connection.close()
+
+    print("[Checkpoint 00", datetime.utcfromtimestamp(time.time()),
+              "] Waiting for new Tweets")
 
 def main(args):
 
     ip = args.server_ip
     tag = args.hashtag
 
-    sendMessageToQueue(ip)
+    # sendMessageToQueue(ip)
+    print("[Checkpoint 00", datetime.utcfromtimestamp(time.time()),
+              "] Waiting for new Tweets containing", tag)
 
     #setLEDW()
 
