@@ -12,6 +12,9 @@ import pika, sys, tweepy
 import pymongo
 from bson import json_util
 
+# suppress warnings
+GPIO.setwarnings(False)
+
 # setup pins
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(11, GPIO.OUT) # Red
@@ -200,7 +203,7 @@ def sendMessageToQueue(ip, document):
         #                       auto_ack=True)
         # channel.start_consuming()
     else:
-        print("WTF")
+        print("should not get here")
     connection.close()
 
     print("\n[Checkpoint 00", datetime.utcfromtimestamp(time.time()),
