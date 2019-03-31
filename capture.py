@@ -111,12 +111,14 @@ class listener(StreamListener):
 
         # Checkpoint 03 - Change LED
         print("\n[Checkpoint 03", datetime.utcfromtimestamp(time.time()),
-              "] GPIO LED: ") # TO DO: i don't know what else goes here
+              "] GPIO LED: Command status displayed on LED")
 
         if action == "p":
                 setLEDR()
+                print("Red")
         elif action == "c":
                 setLEDG()
+                print("Green")
 
         # Set LED back to white to show we are waiting for another command
         setLEDW()
@@ -211,7 +213,7 @@ def main(args):
 
     print("[Checkpoint 00", datetime.utcfromtimestamp(time.time()),
               "] Waiting for new Tweets containing", tag)
-
+im
     setLEDW()
 
     # setup access to Twitter API
