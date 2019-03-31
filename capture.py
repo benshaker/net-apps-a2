@@ -7,7 +7,7 @@ from tweepy.streaming import StreamListener
 from tweepy import OAuthHandler, Stream
 from datetime import datetime
 from pprint import pprint
-import time, argparse, os, json
+import time, argparse, os, json, re
 import pika, sys, tweepy
 import pymongo
 from bson import json_util
@@ -67,28 +67,30 @@ class listener(StreamListener):
         print("[Checkpoint 01", datetime.utcfromtimestamp(time.time()),
               "] Tweet captured: ", tweet)
 
-        # We are inferring that the tweet format is
+        # We are inferring that the tweet format some combination of
         # #ECE4564TXX _:_____+_____ "..."
         # ^           ^             ^
         # tag,        msg_route,    msg
-        tag, msg_route, msg = tweet.split(" ",2) # splits on space
 
-        # _:_____+_____
-        # ^ ^
-        # a,p_s
-        action, place_subject = msg_route.split(":")
+        # tag, msg_route, msg = tweet.split(" ",2) # splits on space
+        tag = None
+        msg_route = None
+        msg = None
 
-        # _____+_____
-        # ^     ^
-        # place,subject
+        for section in tweet.split(None, 2):
+            if section.startswith("#"):
+                tag = section
+                team_num = tag[-2:]
+            elif section.startswith("p") or section.startswith("c"):
+                msg_route = section
+                action, place_subject = msg_route.split(":")
+                place, subject = place_subject.split("+")
 
-        place, subject = place_subject.split("+")
-
-        # #ECE4564TXX
-        #          ^
-        #          team_num
-        team_num = tag[-2:] # Grab the last two chars for the team number
-
+        if action == 'p':
+            # gotta get rid of them dang curly quotations
+            tweet = tweet.replace('“','"').replace('”','"')
+            msg = str(re.findall(r'"([^"]*)"', tweet)[0])
+        print("msg",msg)
 
         storage_time = str(time.time())
 
@@ -155,13 +157,47 @@ def sendMessageToQueue(ip, document):
         # Checkpoint 04 - RabbitMQ producer success
         print("[Checkpoint 04", datetime.utcfromtimestamp(time.time()),
               "] Print out RabbitMQ command sent to the Repository RPi:",
-              "\nProducer Message:",
+              "\nPublish Message to:",
               "\nPlace: ", place,
               "\nSubject: ", subject,
               "\nMessage: ", message)
 
     elif action == "c":
-        print("CONSUME")
+
+        channel.queue_bind(exchange=place,
+                           queue=subject)
+
+        print("[Checkpoint 04", datetime.utcfromtimestamp(time.time()),
+              "] Print out RabbitMQ command sent to the Repository RPi:",
+              "\nConsume Messages from:",
+              "\nPlace: ", place,
+              "\nSubject: ", subject)
+
+        print("[Checkpoint 05", datetime.utcfromtimestamp(time.time()),
+              "] Print out RabbitMQ command sent to the Repository RPi:")
+
+        body = True
+        while body:
+            # get a single message from the queue
+            method, _, body = channel.basic_get(subject, True)
+            if not body: continue
+
+            print("\nMessage Number: ",method.message_count,
+                  "\nPlace: ", method.exchange,
+                  "\nSubject: ", method.routing_key,
+                  "\nMessage: ", body.decode('utf-8'))
+
+
+        # the following consuming code is blocking in such a way
+        # that it will forever wait for more messages to arrive
+
+        # def callback(ch, method, properties, body):
+        #     print("this_shiz", method, properties, body)
+
+        # channel.basic_consume(queue=subject,
+        #                       on_message_callback=callback,
+        #                       auto_ack=True)
+        # channel.start_consuming()
     else:
         print("WTF")
     connection.close()
