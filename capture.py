@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # capture.py
 
-# import RPi.GPIO as GPIO
+import RPi.GPIO as GPIO
 from captureKeys import APIKey, APISecretKey, AccessKey, AccessSecretKey
 from tweepy.streaming import StreamListener
 from tweepy import OAuthHandler, Stream
@@ -12,32 +12,32 @@ import pika, sys, tweepy
 import pymongo
 from bson import json_util
 
-'''# setup pins
+# setup pins
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(11, GPIO.OUT) # Red
 GPIO.setup(13, GPIO.OUT) # Green
 GPIO.setup(15, GPIO.OUT) # Blue
 
-def setLEDW(self):
+def setLEDW():
     # white LED - Waiting for command
     GPIO.output(11, GPIO.HIGH)
     GPIO.output(13, GPIO.HIGH)
     GPIO.output(15, GPIO.HIGH)
     time.sleep(3)
-
-def setLEDR(self):
+    
+def setLEDR():
     # red LED - Received pulish request
     GPIO.output(11, GPIO.HIGH)
     GPIO.output(13, GPIO.LOW)
     GPIO.output(15, GPIO.LOW)
     time.sleep(3)
 
-def setLEDG(self):
+def setLEDG():
     # green LED - Received consume request
     GPIO.output(11, GPIO.LOW)
     GPIO.output(13, GPIO.HIGH)
     GPIO.output(15, GPIO.LOW)
-    time.sleep(3)'''
+    time.sleep(3)
 
 class listener(StreamListener):
     def other_init(self, ip):
@@ -113,13 +113,13 @@ class listener(StreamListener):
         print("\n[Checkpoint 03", datetime.utcfromtimestamp(time.time()),
               "] GPIO LED: ") # TO DO: i don't know what else goes here
 
-        '''if action == "p":
+        if action == "p":
                 setLEDR()
-        else if action == "c":
+        elif action == "c":
                 setLEDG()
 
         # Set LED back to white to show we are waiting for another command
-        setLEDW()'''
+        setLEDW()
 
         # now send this message to our message queue
         sendMessageToQueue(self.ip, document)
@@ -209,11 +209,10 @@ def main(args):
     ip = args.server_ip
     tag = args.hashtag
 
-    # sendMessageToQueue(ip)
     print("[Checkpoint 00", datetime.utcfromtimestamp(time.time()),
               "] Waiting for new Tweets containing", tag)
 
-    #setLEDW()
+    setLEDW()
 
     # setup access to Twitter API
     auth = OAuthHandler(APIKey, APISecretKey)
