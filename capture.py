@@ -64,7 +64,7 @@ class listener(StreamListener):
         tweet = data["text"] # I am assuming this is a string...
 
         # Checkpoint 01 - Display the Command w/ current timestamp
-        print("[Checkpoint 01", datetime.utcfromtimestamp(time.time()),
+        print("\n[Checkpoint 01", datetime.utcfromtimestamp(time.time()),
               "] Tweet captured: ", tweet)
 
         # We are inferring that the tweet format some combination of
@@ -90,7 +90,6 @@ class listener(StreamListener):
             # gotta get rid of them dang curly quotations
             tweet = tweet.replace('“','"').replace('”','"')
             msg = str(re.findall(r'"([^"]*)"', tweet)[0])
-        print("msg",msg)
 
         storage_time = str(time.time())
 
@@ -105,13 +104,13 @@ class listener(StreamListener):
         })
 
         # Checkpoint 02 - Save to MongoDB via NoSQL
-        print("[Checkpoint 02", datetime.utcfromtimestamp(time.time()),
+        print("\n[Checkpoint 02", datetime.utcfromtimestamp(time.time()),
               "] Stored command in MongoDB instance: ")
         document = collection.find_one({"MsgID": team_num + "$" + storage_time})
         pprint(document)
 
         # Checkpoint 03 - Change LED
-        print("[Checkpoint 03", datetime.utcfromtimestamp(time.time()),
+        print("\n[Checkpoint 03", datetime.utcfromtimestamp(time.time()),
               "] GPIO LED: ") # TO DO: i don't know what else goes here
 
         '''if action == "p":
@@ -155,7 +154,7 @@ def sendMessageToQueue(ip, document):
                               routing_key=subject,
                               body=message)
         # Checkpoint 04 - RabbitMQ producer success
-        print("[Checkpoint 04", datetime.utcfromtimestamp(time.time()),
+        print("\n[Checkpoint 04", datetime.utcfromtimestamp(time.time()),
               "] Print out RabbitMQ command sent to the Repository RPi:",
               "\nPublish Message to:",
               "\nPlace: ", place,
@@ -167,13 +166,13 @@ def sendMessageToQueue(ip, document):
         channel.queue_bind(exchange=place,
                            queue=subject)
 
-        print("[Checkpoint 04", datetime.utcfromtimestamp(time.time()),
+        print("\n[Checkpoint 04", datetime.utcfromtimestamp(time.time()),
               "] Print out RabbitMQ command sent to the Repository RPi:",
               "\nConsume Messages from:",
               "\nPlace: ", place,
               "\nSubject: ", subject)
 
-        print("[Checkpoint 05", datetime.utcfromtimestamp(time.time()),
+        print("\n[Checkpoint 05", datetime.utcfromtimestamp(time.time()),
               "] Print out RabbitMQ command sent to the Repository RPi:")
 
         body = True
@@ -202,7 +201,7 @@ def sendMessageToQueue(ip, document):
         print("WTF")
     connection.close()
 
-    print("[Checkpoint 00", datetime.utcfromtimestamp(time.time()),
+    print("\n[Checkpoint 00", datetime.utcfromtimestamp(time.time()),
               "] Waiting for new Tweets")
 
 def main(args):
