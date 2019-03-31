@@ -27,7 +27,7 @@ def setLEDW():
     GPIO.output(13, GPIO.HIGH)
     GPIO.output(15, GPIO.HIGH)
     time.sleep(3)
-    
+
 def setLEDR():
     # red LED - Received pulish request
     GPIO.output(11, GPIO.HIGH)
@@ -47,6 +47,7 @@ class listener(StreamListener):
         self.ip = ip
         self.client = pymongo.MongoClient("mongodb://localhost:27017/")
 
+        # declare all exchanges and queues we will use
         self.Squires = self.client["Squires"]
         self.food = self.Squires["Food"]
         self.meetings = self.Squires["Meetings"]
@@ -80,6 +81,7 @@ class listener(StreamListener):
         msg_route = None
         msg = None
 
+        # spilt the tweet based on certain identifying characters
         for section in tweet.split(None, 2):
             if section.startswith("#"):
                 tag = section
@@ -96,6 +98,7 @@ class listener(StreamListener):
 
         storage_time = str(time.time())
 
+        # identify the mongo db collection and input this tweet
         db = self.client[place]
         collection = db[subject]
         collection.insert_one({
@@ -116,6 +119,7 @@ class listener(StreamListener):
         print("\n[Checkpoint 03", datetime.utcfromtimestamp(time.time()),
               "] GPIO LED: Command status displayed on LED")
 
+        # output the correct LED lights as a result
         if action == "p":
                 setLEDR()
                 print("Red")
@@ -132,6 +136,7 @@ class listener(StreamListener):
 
 def sendMessageToQueue(ip, document):
 
+    # put the mongo document into a format we can work with
     json_doc = json.dumps(document,default=json_util.default)
     json_doc = json.loads(json_doc)
 
@@ -140,6 +145,7 @@ def sendMessageToQueue(ip, document):
     subject = json_doc["Subject"]
     message = json_doc["Message"]
 
+    # adequately log into the rabbitmq instance from afar
     credentials = pika.PlainCredentials('pi', 'raspberry')
     connection = pika.BlockingConnection(
                     pika.ConnectionParameters(ip,
@@ -216,7 +222,7 @@ def main(args):
 
     print("[Checkpoint 00", datetime.utcfromtimestamp(time.time()),
               "] Waiting for new Tweets containing", tag)
-im
+
     setLEDW()
 
     # setup access to Twitter API
